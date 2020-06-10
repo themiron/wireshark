@@ -1016,7 +1016,7 @@ ssh_dissect_protocol(tvbuff_t *tvb, packet_info *pinfo,
         return offset;
     }
 
-    if (!is_response) {
+    if (!is_response || *(version) == SSH_VERSION_UNKNOWN) {
         if (tvb_strncaseeql(tvb, offset, "SSH-2.", 6) == 0) {
             *(version) = SSH_VERSION_2;
         } else if (tvb_strncaseeql(tvb, offset, "SSH-1.99-", 9) == 0) {
