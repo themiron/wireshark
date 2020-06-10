@@ -723,6 +723,7 @@ ssh_dissect_key_exchange(tvbuff_t *tvb, packet_info *pinfo,
     guint   remain_length;
     int     last_offset = offset;
     guint   msg_code;
+    gchar   *key_ex_title;
 
     proto_item *ti;
     proto_item *key_ex_tree = NULL;
@@ -786,7 +787,10 @@ ssh_dissect_key_exchange(tvbuff_t *tvb, packet_info *pinfo,
     proto_tree_add_uint(tree, hf_ssh_padding_length, tvb, offset, 1, padding_length);
     offset += 1;
 
-    key_ex_tree = proto_tree_add_subtree(tree, tvb, offset, plen-1, ett_key_exchange, NULL, "Key Exchange");
+    key_ex_title = "Key Exchange";
+    if (global_data->kex)
+        key_ex_title = wmem_strdup_printf(wmem_packet_scope(), "%s (type: %s)", key_ex_title, global_data->kex);
+    key_ex_tree = proto_tree_add_subtree(tree, tvb, offset, plen-1, ett_key_exchange, NULL, key_ex_title);
 
     /* msg_code */
     msg_code = tvb_get_guint8(tvb, offset);
@@ -1114,7 +1118,8 @@ static void ssh_set_kex_specific_dissector(struct ssh_flow_data *global_data)
         global_data->kex_specific_dissector = ssh_dissect_kex_dh_gex;
     }
     else if (g_str_has_prefix(kex_name, "ecdh-sha2-") ||
-        strcmp(kex_name, "curve25519-sha256@libssh.org") == 0)
+        g_str_has_prefix(kex_name, "curve25519-sha256") ||
+        strcmp(kex_name, "curve448-sha512") == 0)
     {
         global_data->kex_specific_dissector = ssh_dissect_kex_ecdh;
     }
